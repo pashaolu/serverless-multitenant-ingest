@@ -152,7 +152,115 @@ resource "aws_cloudwatch_log_group" "ingest" {
   }
 }
 
-# ECS task definition (stub: runs ingest job with CONFIG_KEY from override)
+# EventBridge Scheduler: one schedule per pipeline config in configs/tenants/
+locals {
+  config_files = fileset("${path.module}/configs/tenants", "**/*.yaml")
+  configs = {
+    for path in local.config_files :
+    path => merge(
+      yamldecode(file("${path.module}/configs/tenants/${path}")),
+      { _config_key = "tenants/${path}" }
+    )
+  }
+  # AWS EventBridge cron has 6 fields: min hour day-of-month month day-of-week year.
+  # Convert 5-field cron (e.g. "0 6 * * *") to "0 6 * * ? *".
+  to_aws_cron = {
+    for path, cfg in local.configs :
+    path => length(split(" ", cfg.schedule)) == 5 ? join(" ", concat(slice(split(" ", cfg.schedule), 0, 4), ["?"], ["*"])) : cfg.schedule
+  }
+}
+
+# IAM role for EventBridge Scheduler to run ECS tasks
+resource "aws_iam_role" "scheduler" {
+  name = "${local.name_prefix}-scheduler"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy" "scheduler_run_ecs" {
+  name = "run-ecs-task"
+  role = aws_iam_role.scheduler.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "ecs:RunTask"
+        Resource = aws_ecs_task_definition.ingest.arn
+      },
+      {
+        Effect = "Allow"
+        Action = "iam:PassRole"
+        Resource = [
+          aws_iam_role.ecs_execution.arn,
+          aws_iam_role.ecs_task.arn
+        ]
+        Condition = {
+          StringLike = {
+            "iam:PassedToService" = "ecs-tasks.amazonaws.com"
+          }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_scheduler_schedule" "pipeline" {
+  for_each = local.configs
+
+  name       = "${replace(each.key, "/", "-")}-trigger"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression          = "cron(${local.to_aws_cron[each.key]})"
+  schedule_expression_timezone = var.scheduler_timezone
+  description                  = try(each.value.description, "Pipeline: ${each.value.pipeline_name}")
+
+  target {
+    arn      = "arn:aws:scheduler:::aws-sdk:ecs:runTask"
+    role_arn = aws_iam_role.scheduler.arn
+
+    input = jsonencode({
+      Cluster        = aws_ecs_cluster.main.arn
+      TaskDefinition = aws_ecs_task_definition.ingest.arn
+      LaunchType     = "FARGATE"
+      NetworkConfiguration = {
+        awsvpcConfiguration = {
+          Subnets         = var.ecs_subnet_ids
+          SecurityGroups  = var.ecs_security_group_ids
+          AssignPublicIp  = "ENABLED"
+        }
+      }
+      Overrides = {
+        containerOverrides = [
+          {
+            name = "ingest"
+            environment = [
+              { name = "CONFIG_KEY", value = each.value._config_key }
+            ]
+          }
+        ]
+      }
+    })
+  }
+}
+
+# ECS task definition (runs ingest job; CONFIG_KEY set by scheduler override)
 resource "aws_ecs_task_definition" "ingest" {
   family                   = "${local.name_prefix}-ingest"
   network_mode             = "awsvpc"

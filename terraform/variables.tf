@@ -14,3 +14,19 @@ variable "ingest_job_image" {
   type        = string
   default     = ""
 }
+
+variable "ecs_subnet_ids" {
+  description = "Subnet IDs for the ECS Fargate task (e.g. private subnets with NAT or public subnets)."
+  type        = list(string)
+}
+
+variable "ecs_security_group_ids" {
+  description = "Security group IDs for the ECS Fargate task (must allow outbound to S3, Secrets Manager, and the internet for CRM/Snowflake)."
+  type        = list(string)
+}
+
+variable "scheduler_timezone" {
+  description = "Timezone for cron schedules in pipeline configs (e.g. Europe/London)."
+  type        = string
+  default     = "UTC"
+}

@@ -4,7 +4,7 @@
 
 tenant_id: example
 pipeline_name: example_salesforce
-schedule: "0 6 * * *"  # 6am daily (used by EventBridge in Stage 3)
+schedule: "0 6 * * *"  # 6am daily (EventBridge Scheduler)
 
 destination:
   type: snowflake
