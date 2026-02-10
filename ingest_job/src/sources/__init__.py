@@ -1,1 +1,1 @@
-# CRM sources (Salesforce, HubSpot) - dlt verified sources vendored/adapted
+# CRM sources: Salesforce (vendored here), HubSpot (vendored in vendored/hubspot)

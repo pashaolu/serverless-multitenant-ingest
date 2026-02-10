@@ -11,7 +11,7 @@ export CONFIG_KEY=tenants/example/salesforce.yaml
 uv sync && uv run python src/main.py
 ```
 
-Create the secrets in AWS Secrets Manager (JSON) and upload the matching config YAML to S3. Example config: `terraform/configs/tenants/example/salesforce.yaml`.
+Create the secrets in AWS Secrets Manager (JSON) and upload the matching config YAML to S3. Example configs: `terraform/configs/tenants/example/salesforce.yaml`, `terraform/configs/tenants/example/hubspot.yaml`.
 
 ## Build and push (ECR)
 

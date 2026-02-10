@@ -1,0 +1,20 @@
+# Example: one tenant, HubSpot -> Snowflake
+# Upload to S3 and run with CONFIG_KEY=tenants/example/hubspot.yaml
+# Create AWS Secrets Manager secret with key "access_token" (or "api_key") = HubSpot private app token.
+
+tenant_id: example
+pipeline_name: example_hubspot
+description: "HubSpot CRM to Snowflake"
+schedule: "0 7 * * *"  # 7am daily (EventBridge Scheduler)
+
+destination:
+  type: snowflake
+  database: raw_db
+  schema: tenant_example
+  dataset_name: example_hubspot
+  credentials_ref: mt-ingest/snowflake
+
+source:
+  type: hubspot
+  credentials_ref: mt-ingest/example/hubspot
+  # Optional: include_history: true, soft_delete: false, include_custom_props: true

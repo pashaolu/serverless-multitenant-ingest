@@ -1,10 +1,13 @@
-"""Resolve pipeline source from config: salesforce, hubspot (later). Returns a dlt source to run."""
+"""Resolve pipeline source from config: salesforce, hubspot. Returns a dlt source to run."""
 
 from typing import Any, Dict
 
 from sources.salesforce import salesforce_source
 from sources.salesforce.helpers.client import SecurityTokenAuth
-from secrets_resolver import salesforce_credentials_from_secret
+from secrets_resolver import (
+    salesforce_credentials_from_secret,
+    hubspot_credentials_from_secret,
+)
 
 
 def get_salesforce_source(source_config: Dict[str, Any]):
@@ -21,12 +24,34 @@ def get_salesforce_source(source_config: Dict[str, Any]):
     return salesforce_source(credentials=auth)
 
 
+def get_hubspot_source(source_config: Dict[str, Any]):
+    """Build the HubSpot dlt source from config. Credentials from Secrets Manager."""
+    from vendored.hubspot import hubspot
+
+    credentials_ref = source_config.get("credentials_ref")
+    if not credentials_ref:
+        raise ValueError("source.credentials_ref is required for HubSpot")
+    creds = hubspot_credentials_from_secret(credentials_ref)
+    kwargs = {"api_key": creds["api_key"]}
+    if source_config.get("include_history") is not None:
+        kwargs["include_history"] = source_config["include_history"]
+    if source_config.get("soft_delete") is not None:
+        kwargs["soft_delete"] = source_config["soft_delete"]
+    if source_config.get("include_custom_props") is not None:
+        kwargs["include_custom_props"] = source_config["include_custom_props"]
+    if source_config.get("properties"):
+        kwargs["properties"] = source_config["properties"]
+    return hubspot(**kwargs)
+
+
 def pipeline_source_from_config(source_type: str, source_config: Dict[str, Any]):
     """
     Return a dlt source (callable that returns resources) for the given type and config.
     """
     if source_type == "salesforce":
         return get_salesforce_source(source_config)
+    if source_type == "hubspot":
+        return get_hubspot_source(source_config)
     raise ValueError(f"Unknown source type: {source_type}")
 
 

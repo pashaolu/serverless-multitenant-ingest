@@ -13,6 +13,7 @@ Pipeline config is YAML in S3; the ingest job reads config, resolves credentials
 
 - [dlt docs](https://dlthub.com/docs)
 - [Salesforce source](https://dlthub.com/docs/dlt-ecosystem/verified-sources/salesforce)
+- [HubSpot source](https://dlthub.com/docs/dlt-ecosystem/verified-sources/hubspot)
 - [Snowflake destination](https://dlthub.com/docs/dlt-ecosystem/destinations/snowflake)
 
 ## Prerequisites
@@ -26,7 +27,7 @@ Pipeline config is YAML in S3; the ingest job reads config, resolves credentials
 ## Project structure
 
 - `terraform/` – AWS infrastructure (S3, ECS, EventBridge Scheduler, IAM for Secrets Manager)
-- `ingest_job/` – Python job that reads config from S3 and runs dlt pipelines (Salesforce → Snowflake)
+- `ingest_job/` – Python job that reads config from S3 and runs dlt pipelines (Salesforce, HubSpot → Snowflake)
 - `docs/` – Architecture and runbooks
 
 ## Quick start
@@ -41,4 +42,4 @@ Pipeline config is YAML in S3; the ingest job reads config, resolves credentials
 1. Add a YAML file under `terraform/configs/tenants/<tenant_id>/` (e.g. `salesforce.yaml`, `hubspot.yaml`). Include `pipeline_name`, `schedule` (5-field cron, e.g. `0 6 * * *`), `source`, and `destination` with `credentials_ref` pointing to Secrets Manager.
 2. Run `terraform apply` so EventBridge Scheduler creates a schedule for the new config.
 3. Upload the new config to S3: `aws s3 cp terraform/configs/tenants/<tenant_id>/<file>.yaml s3://<config-bucket>/tenants/<tenant_id>/`.
-4. Create the required secrets in AWS Secrets Manager (Salesforce, Snowflake) and reference them in the config.
+4. Create the required secrets in AWS Secrets Manager (Salesforce: `user_name`, `password`, `security_token`; HubSpot: `access_token` or `api_key`; Snowflake: connection credentials) and reference them in the config.

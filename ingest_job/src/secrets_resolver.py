@@ -37,6 +37,18 @@ def salesforce_credentials_from_secret(secret_ref: str) -> Dict[str, Any]:
     }
 
 
+def hubspot_credentials_from_secret(secret_ref: str) -> Dict[str, Any]:
+    """
+    Load HubSpot credentials from Secrets Manager.
+    Expected JSON key: access_token or api_key (private app access token).
+    """
+    data = get_secret(secret_ref)
+    token = data.get("access_token") or data.get("api_key")
+    if not token:
+        raise ValueError("HubSpot secret must contain 'access_token' or 'api_key'")
+    return {"api_key": token}
+
+
 def snowflake_credentials_from_secret(secret_ref: str) -> Dict[str, Any]:
     """
     Load Snowflake credentials from Secrets Manager.
