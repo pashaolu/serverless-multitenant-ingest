@@ -1,0 +1,18 @@
+# Example: one tenant, Salesforce -> Snowflake
+# Upload this to S3 and run the ingest task with CONFIG_KEY=tenants/example/salesforce.yaml
+# Create AWS Secrets Manager secrets for credentials_ref values (JSON).
+
+tenant_id: example
+pipeline_name: example_salesforce
+schedule: "0 6 * * *"  # 6am daily (used by EventBridge in Stage 3)
+
+destination:
+  type: snowflake
+  database: raw_db
+  schema: tenant_example
+  dataset_name: example_salesforce
+  credentials_ref: mt-ingest/snowflake  # Secrets Manager secret name or ARN
+
+source:
+  type: salesforce
+  credentials_ref: mt-ingest/example/salesforce  # Secrets Manager: user_name, password, security_token

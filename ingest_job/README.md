@@ -1,15 +1,17 @@
 # Ingest job
 
-Python job run as an ECS Fargate task. Reads pipeline config from S3 (`CONFIG_KEY`) and runs the configured dlt pipeline (Stage 2+). Stage 1 only loads and logs the config.
+Python job run as an ECS Fargate task. Reads pipeline config from S3 (`CONFIG_KEY`) and runs the configured **dlt** pipeline (Salesforce or HubSpot → Snowflake). Credentials for CRM and Snowflake are read from AWS Secrets Manager (see config `credentials_ref`).
 
 ## Local run (optional)
 
 ```bash
 export S3_CONFIG_BUCKET=your-bucket
 export CONFIG_KEY=tenants/example/salesforce.yaml
-# AWS credentials in env or ~/.aws
+# AWS credentials in env or ~/.aws (for S3 and Secrets Manager)
 uv sync && uv run python src/main.py
 ```
+
+Create the secrets in AWS Secrets Manager (JSON) and upload the matching config YAML to S3. Example config: `terraform/configs/tenants/example/salesforce.yaml`.
 
 ## Build and push (ECR)
 
