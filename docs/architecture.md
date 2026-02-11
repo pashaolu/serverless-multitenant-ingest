@@ -20,3 +20,7 @@ All AWS resources are provisioned with **Terraform** (S3, ECS, EventBridge Sched
 3. Parses config → `source.type`, `source.credentials_ref`, `destination.credentials_ref`.
 4. Fetches secrets from Secrets Manager, builds dlt source (e.g. Salesforce, HubSpot, or any supported source) and pipeline (Snowflake).
 5. `pipeline.run(source)` → extract from source, load into Snowflake; then process exits.
+
+## Incremental loading
+
+dlt stores pipeline state (incremental cursors, etc.) in the destination. With Snowflake, state lives in Snowflake, so each run (same `pipeline_name` and dataset) resumes from the last run and sources only extract new or changed data. See [dlt incremental loading](https://dlthub.com/docs/general-usage/incremental-loading).

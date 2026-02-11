@@ -35,7 +35,11 @@ This project uses **[dlt](https://dlthub.com)** (data load tool) to run the actu
 
 Pipeline config is YAML in S3; the ingest job reads config, resolves credentials from Secrets Manager, and runs the configured dlt source into Snowflake.
 
+### Incremental loading (dlt)
 
+[dlt](https://dlthub.com/docs/general-usage/incremental-loading) manages incremental loading via pipeline state. Each scheduled run uses the `pipeline_name` and dataset, so dlt loads the existing state from the target database (Snowflake) and sources (e.g. Salesforce, HubSpot) only fetch new or changed data on subsequent runs. No extra configuration is required.
+
+Check [incremental loading strategies](https://dlthub.com/docs/general-usage/incremental-loading#incremental-loading-strategies) for more information about approaches to incremental loading in dlt
 
 ## Prerequisites
 
