@@ -26,7 +26,7 @@ def get_salesforce_source(source_config: Dict[str, Any]):
 
 def get_hubspot_source(source_config: Dict[str, Any]):
     """Build the HubSpot dlt source from config. Credentials from Secrets Manager."""
-    from vendored.hubspot import hubspot
+    from sources.hubspot import hubspot
 
     credentials_ref = source_config.get("credentials_ref")
     if not credentials_ref:

@@ -1,6 +1,6 @@
 # serverless-mt-ingest
 
-Multi-tenant, configuration-driven CRM data ingestion on AWS. Ingests from Salesforce and HubSpot into Snowflake (raw data as VARIANT), orchestrated by ECS Fargate and EventBridge Scheduler.
+Serverless multi-tenant, configuration-driven data ingestion on AWS. It works with **any data source supported by [dlt](https://dlthub.com)**: Add pipeline configs and run from Salesforce, HubSpot, REST APIs, databases, and other dlt verified sources into Snowflake. Infrastructure is defined and deployed with **Terraform**; orchestration is ECS Fargate and EventBridge Scheduler.
 
 ## Architecture
 
@@ -17,51 +17,48 @@ flowchart LR
     ECS -->|dlt load| SF
   end
   subgraph external [External]
-    CRM[Salesforce or HubSpot]
+    Source[dlt source e.g. CRM APIs DB]
     SF[Snowflake]
   end
-  ECS -->|extract| CRM
+  ECS -->|extract| Source
   ECS -->|load| SF
 ```
 
-One EventBridge schedule exists per pipeline config (per tenant/source). Each run starts an ECS Fargate task with `CONFIG_KEY` set to the config path in S3. The task reads the YAML, fetches CRM and Snowflake credentials from Secrets Manager, runs the dlt pipeline, and exits.
+One EventBridge schedule exists per pipeline config (per tenant/source). Each run starts an ECS Fargate task with `CONFIG_KEY` set to the config path in S3. The task reads the YAML, fetches credentials from Secrets Manager, runs the dlt pipeline, and exits.
 
 ## dlt (data load tool)
 
-This project uses **[dlt](https://dlthub.com)** (data load tool) to run the actual pipelines:
+This project uses **[dlt](https://dlthub.com)** (data load tool) to run the actual pipelines. The design is **generic**: any [dlt source](https://dlthub.com/docs/dlt-ecosystem/verified-sources) (CRM, REST APIs, databases, files, etc.) can be wired in via config and a small adapter in the ingest job. Out of the box we include Salesforce and HubSpot as examples; you can add more sources by extending `pipeline_sources`.
 
-- **Sources**: Salesforce, HubSpot via dlt verified sources.
+- **Sources**: Any dlt-supported source; currently implemented: Salesforce, HubSpot.
 - **Destination**: Snowflake; credentials and dataset/schema are config-driven, credentials stored in AWS Secrets Manager.
 
-Pipeline config is YAML in S3; the ingest job reads config, resolves credentials from Secrets Manager, and runs the appropriate dlt source into Snowflake. Data is loaded with dlt’s normal typing; for VARIANT-style raw storage you can use Snowflake’s JSONL loader or add views as needed.
+Pipeline config is YAML in S3; the ingest job reads config, resolves credentials from Secrets Manager, and runs the configured dlt source into Snowflake.
 
-- [dlt docs](https://dlthub.com/docs)
-- [Salesforce source](https://dlthub.com/docs/dlt-ecosystem/verified-sources/salesforce)
-- [HubSpot source](https://dlthub.com/docs/dlt-ecosystem/verified-sources/hubspot)
-- [Snowflake destination](https://dlthub.com/docs/dlt-ecosystem/destinations/snowflake)
+
 
 ## Prerequisites
 
-- AWS account
-- Terraform >= 1.x
+- **AWS account**
+- **Terraform** >= 1.x (used to provision all AWS resources: S3, ECS, EventBridge Scheduler, IAM)
 - Docker (for building the ingest job image)
 - Python 3.12+ with `uv` (for local development)
 - Snowflake account (for destination)
 
 ## Project structure
 
-- `terraform/` – AWS infrastructure (S3, ECS, EventBridge Scheduler, IAM for Secrets Manager)
-- `ingest_job/` – Python job that reads config from S3 and runs dlt pipelines (Salesforce, HubSpot → Snowflake)
+- `terraform/` – **Terraform** modules for AWS (S3, ECS cluster and task, EventBridge Scheduler, IAM). One apply creates the config bucket, Fargate task definition, and one schedule per pipeline config.
+- `ingest_job/` – Python job that reads config from S3 and runs dlt pipelines (any dlt source → Snowflake; examples: Salesforce, HubSpot)
 - `docs/` – [Architecture](docs/architecture.md) and runbooks
 
 ## Deploy
 
 1. Copy `.env.example` to `.env` and set `TF_VAR_project_name`, `TF_VAR_ingest_job_image` (after building), and list variables via a `terraform/terraform.tfvars` file (see `terraform/terraform.tfvars.example`): `ecs_subnet_ids`, `ecs_security_group_ids`.
 2. Build and push the ingest job image to ECR (see `ingest_job/README.md`).
-3. From `terraform/`: `terraform init`, `terraform plan`, `terraform apply`.
+3. Deploy infrastructure with **Terraform**: from `terraform/` run `terraform init`, `terraform plan`, `terraform apply`.
 4. Upload pipeline configs to the S3 config bucket:  
    `aws s3 cp terraform/configs/tenants/ s3://$(terraform -chdir=terraform output -raw s3_config_bucket)/tenants/ --recursive`
-5. Create secrets in AWS Secrets Manager for each pipeline (Salesforce, HubSpot, Snowflake) and set `credentials_ref` in the YAML to the secret name or ARN.
+5. Create secrets in AWS Secrets Manager for each pipeline (source and destination credentials) and set `credentials_ref` in the YAML to the secret name or ARN.
 
 ## Run a pipeline ad hoc
 
@@ -83,7 +80,7 @@ Use your actual subnet IDs, security group IDs (e.g. from `terraform.tfvars`), a
 1. Add a YAML file under `terraform/configs/tenants/<tenant_id>/` (e.g. `salesforce.yaml`, `hubspot.yaml`). Include `pipeline_name`, `schedule` (5-field cron, e.g. `0 6 * * *`), `source`, and `destination` with `credentials_ref` pointing to Secrets Manager.
 2. Run `terraform apply` so EventBridge Scheduler creates a schedule for the new config.
 3. Upload the new config to S3: `aws s3 cp terraform/configs/tenants/<tenant_id>/<file>.yaml s3://<bucket>/tenants/<tenant_id>/`.
-4. Create the required secrets in AWS Secrets Manager (Salesforce: `user_name`, `password`, `security_token`; HubSpot: `access_token` or `api_key`; Snowflake: connection credentials) and reference them in the config.
+4. Create the required secrets in AWS Secrets Manager (format depends on the source—e.g. Salesforce: `user_name`, `password`, `security_token`; HubSpot: `access_token` or `api_key`; Snowflake: connection credentials) and reference them in the config.
 
 ## Scaling
 

@@ -1,12 +1,13 @@
 [project]
 name = "mt-ingest-job"
 version = "0.1.0"
-description = "Multi-tenant CRM ingest job: config-driven dlt pipelines to Snowflake"
+description = "Serverless multi-tenant ingest job: config-driven dlt pipelines to Snowflake"
 requires-python = ">=3.12"
 dependencies = [
     "boto3>=1.34.0",
     "pyyaml>=6.0",
     "dlt[snowflake]>=1.15.0",
+    "dlt-verified-sources @ git+https://github.com/dlt-hub/verified-sources.git@master",
     "simple-salesforce>=1.12.4",
     "pendulum>=3.0",
 ]
