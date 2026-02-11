@@ -11,8 +11,8 @@ destination:
   database: raw_db
   schema: tenant_example
   dataset_name: example_salesforce
-  credentials_ref: mt-ingest/snowflake  # Secrets Manager secret name or ARN
+  credentials_ref: serverless-multitenant-ingest/snowflake  # Secrets Manager secret name or ARN
 
 source:
   type: salesforce
-  credentials_ref: mt-ingest/example/salesforce  # Secrets Manager: user_name, password, security_token
+  credentials_ref: serverless-multitenant-ingest/example/salesforce  # Secrets Manager: user_name, password, security_token

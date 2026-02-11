@@ -18,8 +18,8 @@ Create the secrets in AWS Secrets Manager (JSON) and upload the matching config 
 From repo root, after creating an ECR repo and logging in:
 
 ```bash
-docker build --platform linux/amd64 -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/mt-ingest:latest ingest_job/
-docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/mt-ingest:latest
+docker build --platform linux/amd64 -t ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/serverless-multitenant-ingest:latest ingest_job/
+docker push ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/serverless-multitenant-ingest:latest
 ```
 
 Then set `TF_VAR_ingest_job_image` to that URI and run `terraform apply`.

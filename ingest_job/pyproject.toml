@@ -1,5 +1,5 @@
 [project]
-name = "mt-ingest-job"
+name = "multitenant-ingest-job"
 version = "0.1.0"
 description = "Serverless multi-tenant ingest job: config-driven dlt pipelines to Snowflake"
 requires-python = ">=3.12"

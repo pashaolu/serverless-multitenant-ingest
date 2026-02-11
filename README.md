@@ -1,4 +1,4 @@
-# serverless-mt-ingest
+# serverless-multitenant-ingest
 
 Serverless multi-tenant, configuration-driven data ingestion on AWS. It works with **any data source supported by [dlt](https://dlthub.com)**: Add pipeline configs and run from Salesforce, HubSpot, REST APIs, databases, and other dlt verified sources into Snowflake. Infrastructure is defined and deployed with **Terraform**; orchestration is ECS Fargate and EventBridge Scheduler.
 

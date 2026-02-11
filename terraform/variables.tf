@@ -10,7 +10,7 @@ variable "project_name" {
 }
 
 variable "ingest_job_image" {
-  description = "Full ECR image URI for the ingest job (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/mt-ingest:latest)."
+  description = "Full ECR image URI for the ingest job (e.g. 123456789.dkr.ecr.us-east-1.amazonaws.com/serverless-multitenant-ingest:latest)."
   type        = string
   default     = ""
 }

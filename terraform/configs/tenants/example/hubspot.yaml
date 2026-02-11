@@ -12,9 +12,9 @@ destination:
   database: raw_db
   schema: tenant_example
   dataset_name: example_hubspot
-  credentials_ref: mt-ingest/snowflake
+  credentials_ref: serverless-multitenant-ingest/snowflake
 
 source:
   type: hubspot
-  credentials_ref: mt-ingest/example/hubspot
+  credentials_ref: serverless-multitenant-ingest/example/hubspot
   # Optional: include_history: true, soft_delete: false, include_custom_props: true

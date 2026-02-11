@@ -1,10 +1,10 @@
 # Copy to terraform.tfvars and set values. Required for EventBridge Scheduler (Fargate needs network config).
 
 aws_region   = "us-east-1"
-project_name = "mt-ingest"
+project_name = "serverless-multitenant-ingest"
 
 # ECR image URI after building and pushing the ingest job
-# ingest_job_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/mt-ingest:latest"
+# ingest_job_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/serverless-multitenant-ingest:latest"
 
 # Subnets and security groups for ECS Fargate (e.g. private subnets with NAT or public subnets)
 ecs_subnet_ids         = ["subnet-xxxxxxxx", "subnet-yyyyyyyy"]
