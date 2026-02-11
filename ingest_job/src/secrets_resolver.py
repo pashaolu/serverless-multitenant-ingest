@@ -28,12 +28,16 @@ def salesforce_credentials_from_secret(secret_ref: str) -> Dict[str, Any]:
     """
     Load Salesforce credentials from Secrets Manager.
     Expected JSON keys: user_name, password, security_token (for SecurityTokenAuth).
+    Raises ValueError if any required key is missing.
     """
     data = get_secret(secret_ref)
+    missing = [k for k in ("user_name", "password", "security_token") if not data.get(k)]
+    if missing:
+        raise ValueError(f"Salesforce secret must contain {', '.join(missing)}")
     return {
-        "user_name": data.get("user_name"),
-        "password": data.get("password"),
-        "security_token": data.get("security_token"),
+        "user_name": data["user_name"],
+        "password": data["password"],
+        "security_token": data["security_token"],
     }
 
 
@@ -47,11 +51,3 @@ def hubspot_credentials_from_secret(secret_ref: str) -> Dict[str, Any]:
     if not token:
         raise ValueError("HubSpot secret must contain 'access_token' or 'api_key'")
     return {"api_key": token}
-
-
-def snowflake_credentials_from_secret(secret_ref: str) -> Dict[str, Any]:
-    """
-    Load Snowflake credentials from Secrets Manager.
-    Expected JSON keys: database, username, password, host, warehouse, role (optional).
-    """
-    return get_secret(secret_ref)
